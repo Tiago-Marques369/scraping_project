@@ -1,110 +1,97 @@
-# Books Pipeline Project
+# Books Scraping Pipeline with Airflow, dbt, and Streamlit
 
 ## Overview
-
-This project demonstrates a complete data engineering workflow using **Airflow**, **dbt**, **DuckDB**, and **Streamlit**. The pipeline scrapes book data, transforms it with dbt, and provides a dashboard with Streamlit.
-
-**Pipeline Steps:**
-
-1. **Web Scraping**  
-   - Scrapes book data from the Science category of [Books to Scrape](https://books.toscrape.com/catalogue/category/books/science_22/index.html).  
-   - Handles encoding issues for prices (`£42.96` or `Â£42.96`).  
-   - Saves data as **Parquet** files in `/opt/airflow/data/raw/`.
-
-2. **ETL/Transformation with dbt**  
-   - Uses **DuckDB** as a warehouse.  
-   - Models and transforms raw Parquet data into structured tables.  
-   - Stores the DuckDB database in `/opt/airflow/data/warehouse/books.duckdb`.  
-   - Ensure the folder `data/warehouse` exists before running dbt.
-
-3. **Dashboard with Streamlit**  
-   - Reads the DuckDB database and visualizes metrics such as average price, availability, and rating distributions.  
+This project demonstrates an end-to-end data pipeline for scraping, transforming, and visualizing book data.  
+The workflow is orchestrated with **Apache Airflow**, transformations are applied using **dbt**, storage is managed with **DuckDB**, and an interactive **Streamlit** dashboard allows data exploration.
 
 ---
 
 ## Architecture
+1. **Web Scraping** – Extracts book data (title, price, rating, availability) from [Books to Scrape](https://books.toscrape.com/catalogue/category/books/science_22/index.html).  
+2. **Airflow Orchestration** – Automates scraping tasks, manages scheduling, and monitors execution.  
+3. **Storage** – Saves raw and transformed data into **DuckDB** and Parquet files.  
+4. **dbt Modeling** – Transforms and cleans raw data into analysis-ready models.  
+5. **Streamlit Dashboard** – Provides an interactive visualization of book insights.  
 
+---
+
+## Tech Stack
+- **Apache Airflow** – Orchestration and scheduling  
+- **Python** – Web scraping and ETL (Requests, BeautifulSoup, Pandas)  
+- **DuckDB** – Local analytical storage  
+- **dbt** – Data transformations  
+- **Streamlit** – Dashboard and visualization  
+- **Docker** – Containerized environment  
+
+---
+
+## Project Structure
 ```
-[ Books to Scrape Website ]
-           │
-           ▼
-      Web Scraper
-   (Airflow PythonOperator)
-           │
-           ▼
-  Parquet files in /data/raw
-           │
-           ▼
-         dbt Build
-   (Airflow BashOperator)
-           │
-           ▼
-DuckDB Warehouse (/data/warehouse)
-           │
-           ▼
-     Streamlit Dashboard
+.
+├── dags/
+│   ├── books_pipeline_dag.py        # Airflow DAG
+│   └── scraper/books_scraper.py     # Scraping logic
+├── dbt/
+│   └── models/                      # dbt models
+├── streamlit_app/
+│   └── app.py                       # Dashboard code
+├── data/                            # DuckDB and Parquet outputs
+├── docker-compose.yml
+├── requirements.txt
+└── README.md
 ```
 
 ---
 
-## Airflow DAG
+## Step-by-Step Setup
 
-- DAG name: `books_pipeline_dag`  
-- Tasks:
-  1. `scrape_books` – Scrape and save data as Parquet.
-  2. `dbt_build` – Run dbt models on DuckDB.  
-
-**Trigger DAG manually or via schedule in Airflow UI.**
-
----
-
-## Setup Instructions
-
-1. **Create directories**:
-
+### 1. Clone the repository
 ```bash
-mkdir -p data/raw data/warehouse
+git clone <your_repo_url>
+cd <your_repo_folder>
 ```
 
-2. **Install dependencies** (inside Airflow container):
-
-```bash
-pip install -r requirements.txt
-```
-
-3. **Run Airflow**:
-
+### 2. Start Docker containers
 ```bash
 docker-compose up -d
 ```
 
-4. **Clear and trigger DAG**:
+This will launch Airflow webserver, scheduler, and a Postgres metadata database.
 
-- In Airflow UI: DAG → Clear Tasks → Trigger DAG  
-- Or via terminal:
+### 3. Access Airflow
+Go to [http://localhost:8080](http://localhost:8080)  
+- Username: `airflow`  
+- Password: `airflow`  
 
+Activate the **`books_pipeline_dag`** and trigger it.
+
+### 4. Run dbt transformations
+Inside the container or locally (if dbt is installed):
 ```bash
-docker exec -it <scheduler_container_id> \
-airflow tasks clear books_pipeline_dag --yes
-docker exec -it <scheduler_container_id> \
-airflow dags trigger books_pipeline_dag
+cd dbt
+dbt run
 ```
 
-5. **Check logs**:
+This will create clean models inside DuckDB.
 
-- Scraper output:
-
+### 5. Launch Streamlit dashboard
+```bash
+cd streamlit_app
+streamlit run app.py
 ```
-[scraper] wrote parquet: /opt/airflow/data/raw/books_YYYY-MM-DD.parquet with N rows
-```
 
-- dbt output: verifies creation of DuckDB database at `/opt/airflow/data/warehouse/books.duckdb`.
+Open [http://localhost:8501](http://localhost:8501) to explore the dashboard.
 
 ---
 
-## Notes
+## Results
+- **Raw Data**: Scraped book data stored in Parquet/DuckDB.  
+- **Transformed Data**: Clean tables created with dbt models.  
+- **Dashboard**: Streamlit app showing prices, ratings distribution, and availability.  
 
-- `_parse_price` function in the scraper now removes unexpected characters to avoid conversion errors.  
-- Ensure `data/warehouse` exists to allow dbt to create `books.duckdb`.  
-- Streamlit reads the DuckDB database for visualization.
+---
 
+## Next Steps
+- Extend scraping to multiple categories.  
+- Automate dbt runs directly from Airflow.  
+- Deploy Streamlit dashboard on cloud (e.g., Streamlit Cloud or AWS ECS).  
