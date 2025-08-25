@@ -1,0 +1,8 @@
+books_duckdb:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: /opt/airflow/data/warehouse/books.duckdb
+      threads: 4
+      schema: main

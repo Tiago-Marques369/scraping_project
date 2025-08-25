@@ -1,0 +1,26 @@
+version: 2
+
+models:
+  - name: stg_books
+    description: "Raw scraped books standardized"
+    columns:
+      - name: date_scraped
+        tests: [not_null]
+      - name: title
+        tests: [not_null]
+      - name: product_page
+        tests: [not_null, unique]
+      - name: price_gbp
+      - name: availability
+      - name: rating
+      - name: category
+
+  - name: fct_prices_by_rating
+    description: "Aggregations by rating and date"
+    columns:
+      - name: date_scraped
+      - name: rating
+      - name: n_books
+      - name: avg_price_gbp
+      - name: min_price_gbp
+      - name: max_price_gbp

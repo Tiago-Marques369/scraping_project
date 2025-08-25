@@ -1,0 +1,14 @@
+name: 'books_dbt'
+version: '1.0.0'
+config-version: 2
+
+profile: 'books_duckdb'
+
+model-paths: ['models']
+
+models:
+  books_dbt:
+    staging:
+      +materialized: table
+    marts:
+      +materialized: table

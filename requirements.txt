@@ -1,0 +1,7 @@
+# Airflow will install these on container startup via _PIP_ADDITIONAL_REQUIREMENTS
+requests
+beautifulsoup4
+pandas
+pyarrow
+duckdb
+dbt-duckdb
